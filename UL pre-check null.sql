@@ -1,33 +1,35 @@
-use CA_Database_201812
+USE CA_DATABASE_201812
 
-go
-drop table _ul_nullcheck
+GO
+DROP TABLE _UL_NULLvalues
 
-go
+GO
+SELECT A.POLNO
+	, a.[packcode] [packcode_orig]
+	, A.[PLAN]
+	, A.[PARTNER]
+	, A.[BRANCHCODE]
+	, A.PPSTAT
+	, B3.[SPCODE]
+	, B1.*
+INTO _UL_NULLvalues
+FROM [CA_DATABASE_201812].[DBO].[STRUC_UL2] A -- INSERT TARGET RAW UL DATA TABLE LOCATION HERE
+LEFT JOIN [UL_DIST_MODEL] B2 ON A.[PARTNER] = B2.[PARTNER]
+LEFT JOIN [SPCODE] B3 ON B2.[DIST] = B3.[DIST]
+LEFT JOIN [UL_MODEL] B1 ON B2.[DIST] = B1.DIST
+	AND A.PACKCODE = B1.PACKCODE
+	AND A.[PLAN] = B1.PRODUCT
+WHERE A.PPSTAT = 'IF'
 
-select a.polno
-	, a.[plan]
-	, a.[partner]
-	, a.[branchcode]
-	, a.ppstat
-	, b3.[SPCODE]
-	, b1.*
-into _ul_nullcheck
-from struc_UL2 a
-left join [ul_dist_model] b2 on a.[partner] = b2.[PARTNER]
-left join [SPCODE] b3 on b2.[DIST] = b3.[DIST]
-left join [ul_model] b1 on b2.[DIST] = b1.DIST
-	and a.packcode = b1.PACKCODE
-	and a.[plan] = b1.PRODUCT
-where a.ppstat = 'if'
+-- Construct custom procedure
+DECLARE @TB NVARCHAR(512) = N'DBO.[_UL_NULLvalues]';
 
-DECLARE @tb nvarchar(512) = N'dbo.[_ul_nullcheck]';
-
-DECLARE @sql nvarchar(max) = N'SELECT * FROM ' + @tb
+DECLARE @SQL NVARCHAR(MAX) = N'SELECT * FROM ' + @TB
     + ' WHERE 1 = 0';
 
-SELECT @sql += N' OR ' + QUOTENAME(name) + ' IS NULL'
-    FROM sys.columns 
-    WHERE [object_id] = OBJECT_ID(@tb);
+SELECT @SQL += N' OR ' + QUOTENAME(NAME) + ' IS NULL'
+    FROM SYS.COLUMNS 
+    WHERE [OBJECT_ID] = OBJECT_ID(@TB);
 
-EXEC sys.sp_executesql @sql;
+-- Run procedure
+EXEC SYS.SP_EXECUTESQL @SQL;
