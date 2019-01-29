@@ -1,0 +1,10 @@
+-- Select monthly database for run
+
+USE ACT_DATA_201812
+;
+
+-- GMDT
+
+SELECT *
+FROM Prophet_GMDT
+WHERE [ANNUAL_PREM] <= 0
